@@ -162,7 +162,7 @@ void V202_begin()
   }
   nRF_activate(0x53); // switch bank back
   
-  delay(100); // suurendasin 100-ni, oli 50 20170806
+  delay(100); // was 50 20170806
   nRF_flush_tx();
   nRF_write_register(CONFIG, _BV(EN_CRC) | _BV(CRCO) | _BV(PWR_UP));
   delayMicroseconds(150);
