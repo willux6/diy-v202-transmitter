@@ -4,9 +4,6 @@
 #include <stdio.h>
 
 // Hardware SPI
-
-uint8_t SPI_transfer(uint8_t dat);
-
 #define PAYLOAD_SIZE 16
 uint8_t payload_size = PAYLOAD_SIZE;
 uint8_t dynamic_payloads_enabled  = 0;
