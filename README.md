@@ -1,6 +1,6 @@
 <b>STC 2.4GHz Open Source DIY transmitter: V202 protocol</b>
 
-Program for Chinese Open Source STC15W408AS mcu based transmitter module with nRF24L01 2.4 GHz Radio module.
+Program for <a href="https://www.rcgroups.com/forums/showthread.php?2702433-STC-DIY-2-4G-Open-Source-Remote-Control-Transmitter-C51-Development-Board">Chinese Open Source STC15W408AS mcu based transmitter</a> module with nRF24L01 2.4 GHz Radio module.
 STC15W408AS module uses Hardware SPI to communicate with nRF24L01 and messaging protocol V202.
 As experiments proved the transmitter hardware module has bug - MISO and MOSI connections should be changed to use hardware SPI.
 
