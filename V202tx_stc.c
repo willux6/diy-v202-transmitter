@@ -23,7 +23,7 @@ void InitTMR0(void);
 void InitUart(void);
 void putchar( char c);
 
-// SPI interrupt protoype here, defined in spi2.c
+// SPI interrupt protoype here, defined in spi.c
 void  isr_spi(void) __interrupt (SPI_VECTOR);
 
 // yaw = A0 (J1-Hor) ADC0
@@ -302,6 +302,7 @@ void main() {
  }
 }
 
+// Uart & putchar used for printf debug messages
 void InitUart( void) {
 	SCON = 0x5a; //set UART mode as 8-bit variable baudrate
 	// Timer 2
