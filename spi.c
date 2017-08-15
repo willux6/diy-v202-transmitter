@@ -9,7 +9,7 @@
 // parameter: SPIx: Structural parameters, please refer to spi.h in the definition.
 // return: none.
 //========================================================================
-
+// Both methods with interrupt or without interrupt works
 #ifdef SPI_INTER
 volatile __data uint8_t retval = 0;
 volatile __data _Bool spi_int_done = 0;
