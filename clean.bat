@@ -1,4 +1,4 @@
-#clean
+REM clean
 del *.lst
 del *.rst
 del *.sym

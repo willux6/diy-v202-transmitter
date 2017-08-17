@@ -6,11 +6,9 @@
 #include <stdio.h>
 
 #define FOSC 16000000L
-#define BAUD (65536 - FOSC / 4 / 115200) // 0xFFBB - 16MHz =xFFDE
+#define BAUD (65536 - FOSC / 4 / 115200) // 16MHz = 0xFFDE
 #define LOBYTE(w)           ((BYTE)(WORD)(w))
 #define HIBYTE(w)           ((BYTE)((WORD)(w) >> 8))
-#define T1MS                (65536 - FOSC/1000)         //Initial master chip 1ms Timing
-#define T100MS              (65536 - FOSC/100000)		//Initial master chip 1ms Timing
 #define LEFT_BTN_PRESSED 0x80
 #define RIGHT_BTN_PRESSED 0x40
 #define KADC_BIT3 0x04;
@@ -62,20 +60,44 @@ __data int a1min, a1max;
 __data int a2min, a2max;
 __data int a3min, a3max;
 volatile __data long wdttimer = 0L;
+volatile __data int sound = 0;
+volatile __data int blink = 0;
 
 void isr_tmr0(void) __interrupt (1)
 {
   wdttimer++;
-  WDT_CLEAR(); // 
+  WDT_CLEAR(); //
+  if( sound < 0) {
+	 FMQ_PIN = 0;
+	 sound = -sound;
+  } else if( sound > 0 ) {
+	  if( --sound <= 0) {
+		FMQ_PIN = 1;		  
+	  }
+  }
+  if( blink < 0 ) {
+	  LED_PIN = 0;
+	  blink = -blink;
+  } else if( blink > 0 ) {
+		if (--blink <= 0 )
+		{
+			LED_PIN = 1; blink = 0;
+		} else {
+		  LED_PIN = ( ((blink >> 2) % 2) == 0 ) ? 1 : 0;
+		}
+  }
+  TF0 = 0;
 }
 
-// TMR0 used for WatchDog clear if enabled
+// TMR0 used for WatchDog clear if enabled and tone and blinkLED
 void InitTMR0(void)
 {
-    AUXR |= 0x80;		// Timer0 in 1T mode
-	TMOD = 0x00;		// set Timer0 in mode 0(16 bit auto-reloadable mode)
-    TH0 = 0xfe;			// 100MS higher byte
-    TL0 = 0xc0;			// 100MS lower byte
+ //   AUXR |= 0x80;		// Timer0 in 1T mode
+	AUXR &= ~0x80;		// Timer0 in 12T mode
+	TMOD &= 0xF0;		// set Timer0 in mode 0(16 bit auto-reloadable mode)
+    TH0 = 0x00;			// 49MS higher byte
+    TL0 = 0xCB;			// 49MS lower byte
+	TF0 = 0;
  	TR0 = 1;
     ET0 = 1;
     EA = 1;				// Enable all interrupts
@@ -104,28 +126,24 @@ _Bool readInput()
   if (a < a0min) a0min = a;
   if (a > a0max) a0max = a;
   a = (a-a0min)*255/(a0max-a0min);
-  //if ( abs(a-a0)  > 4 ) changed = 1;
   if (a != a0) { changed = 1; a0 = a; }
 
   a = analogRead(1); // ADC1_PIN, 1 channel
   if (a < a1min) a1min = a;
   if (a > a1max) a1max = a;
   a = (a-a1min)*255/(a1max-a1min);
-  //if ( abs(a-a1)  > 4 ) changed = 1;
   if (a != a1) { changed = 1; a1 = a; }
 
   a = analogRead(2); // ADC2_PIN, 2 channel
   if (a < a2min) a2min = a;
   if (a > a2max) a2max = a;
   a = (a2max-a)*255/(a2max-a2min);
-  //if ( abs(a-a2)  > 4 ) changed = 1;
   if (a != a2) { changed = 1; a2 = a; }
 
   a = analogRead(6); // ADC3_PIN, 6 channel
   if (a < a3min) a3min = a;
   if (a > a3max) a3max = a;
   a = (a3max-a)*255/(a3max-a3min);
-  //if ( abs(a-a3)  > 4 ) changed = 1;
   if (a != a3) { changed = 1; a3 = a; }
   return changed;
 }
@@ -164,19 +182,11 @@ _Bool readInput()
 
 void blinkLED(uint8_t n)
 {
- uint8_t i;
- for( i = 0; i < n ; i++) {
-	LED_PIN = 0;
-	delay(200);
-	LED_PIN = 1;
-	delay(200);
- } 
+	blink = -(n * 8); // after n * 200 ms resets by timer0 
 }
 
 void _tone( int msec) {
-	FMQ_PIN = 0;
-	delay(msec);
-	FMQ_PIN = 1;
+	sound = -(msec / 50); // after msec * 100ms resets by timer0
 }
 
 void main() {
@@ -238,7 +248,7 @@ void main() {
         bind = 0;
         flags = 0;
         printf("Bound1\r\n");
-		blinkLED(2);
+		blinkLED(3);
       }
     } /* */
     if (direction > 0) {
@@ -250,7 +260,7 @@ void main() {
         bind = 0;
         flags = 0;
         printf("Bound2\r\n");
-		blinkLED(3);
+		blinkLED(4);
      }
     }
   } else {
@@ -277,15 +287,15 @@ void main() {
     //
   }
   if( KSA_PIN == 0) {
-	  //_tone(200); // left
+	  blinkLED(1); // left
 	  flags |= LEFT_BTN_PRESSED;
   }
   if( KSB_PIN == 0) {
-	  // blinkLED(1); // right
+	  blinkLED(2); // right
 	  flags |= RIGHT_BTN_PRESSED;
   }
   if( KSC_PIN == 0) {
-	  //_tone(200); blinkLED(1);
+	  _tone(200); // SW11 / S
 	  flags |= KSC_BIT;
   }
   ksadc = analogRead(7);
